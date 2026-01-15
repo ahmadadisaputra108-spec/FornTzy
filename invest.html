@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paket Investasi - Investasi Pintar</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="maintenance-config.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --dark: #212529;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --gray-dark: #343a40;
+            --blue-gradient: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --green-gradient: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animasi bintang & gelembung */
+        #stars, #bubbles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: twinkle 3s infinite ease-in-out;
+        }
+
+        .bubble {
+            position: absolute;
+            background: radial-gradient(circle at 30% 30%, rgba(52, 152, 219, 0.2), rgba(41, 128, 185, 0.1));
+            border-radius: 50%;
+            animation: float 15s infinite ease-in-out;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(5deg); }
+            50% { transform: translateY(-40px) rotate(0deg); }
+            75% { transform: translateY(-20px) rotate(-5deg); }
+        }
+
+        /* Header */
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .logo-icon img {
+            width: 28px;
+            height: auto;
+            filter: brightness(0) invert(1);
+        }
+
+        .app-name h1 {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .app-name p {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-info span {
+            margin-right: 15px;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(52, 152, 219, 0.5);
+        }
+
+        /* Main Content */
+        .invest-main {
+            padding: 20px 15px;
+            padding-bottom: 100px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .balance-info {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-info:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            border-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .balance-info::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+        }
+
+        .balance-info p:first-child {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        #invest-balance {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .invest-tabs {
+            display: flex;
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 5px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            font-size: 15px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            position: relative;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            color: #3498db;
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            font-weight: 600;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+        }
+
+        .invest-packages {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .invest-packages.active {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .package-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            position: relative;
+            transition: transform 0.3s ease;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .package-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            border-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .package-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .package-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+        }
+
+        .package-logo img {
+            width: 36px;
+            height: 36px;
+            filter: brightness(0) invert(1);
+        }
+
+        .package-title h3 {
+            font-size: 18px;
+            color: #fff;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .package-title p {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .package-details {
+            margin-bottom: 20px;
+        }
+
+        .package-details p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .package-details i {
+            margin-right: 12px;
+            color: #3498db;
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: rgba(255, 255, 255, 0.5);
+            margin-right: 8px;
+        }
+
+        .btn-buy {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            color: #fff;
+            border-radius: 12px;
+            font-weight: 500;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-buy:hover {
+            opacity: 0.9;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-buy:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .discount-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #e74c3c, #f39c12);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+            z-index: 2;
+        }
+
+        .invest-info {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            grid-column: 1 / -1;
+        }
+
+        .invest-info h3 {
+            font-size: 18px;
+            color: #fff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .invest-info h3 i {
+            margin-right: 12px;
+            color: #3498db;
+            font-size: 20px;
+        }
+
+        .invest-info ul {
+            padding-left: 10px;
+        }
+
+        .invest-info li {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 10px;
+            padding-left: 10px;
+            position: relative;
+        }
+
+        .invest-info li::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 8px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #3498db;
+        }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(30, 30, 46, 0.95);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 18px 25px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            font-size: 15px;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            max-width: 80%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateY(10px);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid #2ecc71;
+        }
+
+        .toast.error {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .toast.info {
+            border-left: 4px solid #3498db;
+        }
+
+        /* Confirmation Modal */
+        .confirmation-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .confirmation-box {
+            background: rgba(30, 30, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            animation: slideUp 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .confirmation-icon {
+            font-size: 60px;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        .confirmation-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .confirmation-message {
+            margin-bottom: 25px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .confirmation-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .confirmation-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+
+        .btn-cancel {
+            background: linear-gradient(135deg, #e74c3c, #f39c12);
+            color: #fff;
+        }
+
+        .btn-confirm {
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            color: #fff;
+        }
+
+        .btn-cancel:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-confirm:hover {
+            opacity: 0.9;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            padding: 5px 10px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .nav-item i {
+            font-size: 22px;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .nav-item.active i {
+            transform: translateY(-5px);
+        }
+
+        /* Floating CS Button */
+        .cs-float-button {
+            position: fixed;
+            right: 20px;
+            bottom: 80px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 5px 20px rgba(52, 152, 219, 0.5);
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.3s ease;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .cs-float-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.7);
+        }
+
+        .cs-float-button i {
+            pointer-events: none;
+        }
+
+        /* CS Modal */
+        .cs-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cs-modal-content {
+            background: rgba(30, 30, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px;
+            width: 90%;
+            max-width: 350px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            animation: slideUp 0.3s ease;
+        }
+
+        .cs-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .cs-contact-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cs-contact-item:hover {
+            background: rgba(52, 152, 219, 0.2);
+            transform: translateY(-2px);
+            border-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .cs-contact-item i {
+            font-size: 20px;
+            margin-right: 15px;
+            color: #3498db;
+        }
+
+        .cs-contact-item span {
+            font-size: 15px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .cs-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cs-close-btn:hover {
+            color: #e74c3c;
+            transform: rotate(90deg);
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 15px;
+            }
+            
+            .invest-main {
+                padding: 15px;
+                padding-bottom: 80px;
+            }
+            
+            .invest-packages.active {
+                grid-template-columns: 1fr;
+            }
+            
+            .package-card {
+                padding: 20px;
+            }
+            
+            .package-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .package-logo {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app-name h1 {
+                font-size: 16px;
+            }
+            
+            .app-name p {
+                font-size: 10px;
+            }
+            
+            .user-info span {
+                display: none;
+            }
+            
+            .confirmation-buttons {
+                flex-direction: column;
+            }
+            
+            .confirmation-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background elements -->
+    <div id="stars"></div>
+    <div id="bubbles"></div>
+
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <div class="logo-icon">
+                <img src="images/logo-white.png" alt="Investasi Pintar">
+            </div>
+            <div class="app-name">
+                <h1>Investasi Pintar</h1>
+                <p>Platform investasi masa depan</p>
+            </div>
+        </div>
+        <div class="user-info">
+            <span id="username-display">Loading...</span>
+            <img src="images/user-avatar.png" alt="User Avatar" class="avatar">
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="invest-main">
+        <div class="balance-info">
+            <p>Saldo Tersedia</p>
+            <p id="invest-balance">Rp 0</p>
+        </div>
+        
+        <div class="invest-tabs">
+            <button class="tab-btn active" onclick="openInvestTab('regular')">Paket Reguler</button>
+            <button class="tab-btn" onclick="openInvestTab('discount')">Paket Spesial</button>
+        </div>
+        
+        <!-- Paket Reguler -->
+        <div id="regular" class="invest-packages active">
+            <!-- Paket  -->
+            <div class="package-card">
+                <div class="package-header">
+                    <div class="package-title">
+                        <h3>Paket Basic</h3>
+                        <p>Investasi Pemula</p>
+                    </div>
+                </div>
+                <div class="package-details">
+                    <p><i class="fas fa-money-bill-wave"></i> Harga: <strong>Rp 50.000</strong></p>
+                    <p><i class="fas fa-calendar-day"></i> Durasi: <strong>4 Hari</strong></p>
+                    <p><i class="fas fa-coins"></i> Pendapatan Harian: <strong>Rp 20.000</strong></p>
+                    <p><i class="fas fa-percentage"></i> Total ROI: <strong>Rp 80.000</strong></p>
+                </div>
+                <button class="btn-buy" onclick="showBuyConfirmation(50000, 4, 20000, 'Paket Basic')">
+                    <i class="fas fa-shopping-cart"></i> Beli Sekarang
+                </button>
+            </div>
+            
+            <!-- Paket Silver -->
+            <div class="package-card">
+                <div class="package-header">
+                    <div class="package-title">
+                        <h3>Paket Silver</h3>
+                        <p>Investasi Menengah</p>
+                    </div>
+                </div>
+                <div class="package-details">
+                    <p><i class="fas fa-money-bill-wave"></i> Harga: <strong>Rp 120.000</strong></p>
+                    <p><i class="fas fa-calendar-day"></i> Durasi: <strong>7 Hari</strong></p>
+                    <p><i class="fas fa-coins"></i> Pendapatan Harian: <strong>Rp 25.000</strong></p>
+                    <p><i class="fas fa-percentage"></i> Total ROI: <strong>Rp 175.000</strong></p>
+                </div>
+                <button class="btn-buy" onclick="showBuyConfirmation(120000, 7, 25000, 'Paket Silver')">
+                    <i class="fas fa-shopping-cart"></i> Beli Sekarang
+                </button>
+            </div>
+            
+            <!-- Paket Gold -->
+            <div class="package-card">
+                <div class="package-header">
+                    <div class="package-title">
+                        <h3>Paket Gold</h3>
+                        <p>Investasi Profesional</p>
+                    </div>
+                </div>
+                <div class="package-details">
+                    <p><i class="fas fa-money-bill-wave"></i> Harga: <strong>Rp 250.000</strong></p>
+                    <p><i class="fas fa-calendar-day"></i> Durasi: <strong>12 Hari</strong></p>
+                    <p><i class="fas fa-coins"></i> Pendapatan Harian: <strong>Rp 35.000</strong></p>
+                    <p><i class="fas fa-percentage"></i> Total ROI: <strong>Rp 420.000</strong></p>
+                </div>
+                <button class="btn-buy" onclick="showBuyConfirmation(250000, 12, 35000, 'Paket Gold')">
+                    <i class="fas fa-shopping-cart"></i> Beli Sekarang
+                </button>
+            </div>
+            
+            <!-- Paket Platinum -->
+            <div class="package-card">
+                <div class="package-header">
+                    <div class="package-title">
+                        <h3>Paket Platinum</h3>
+                        <p>Investasi Premium</p>
+                    </div>
+                </div>
+                <div class="package-details">
+                    <p><i class="fas fa-money-bill-wave"></i> Harga: <strong>Rp 500.000</strong></p>
+                    <p><i class="fas fa-calendar-day"></i> Durasi: <strong>15 Hari</strong></p>
+                    <p><i class="fas fa-coins"></i> Pendapatan Harian: <strong>Rp 50.000</strong></p>
+                    <p><i class="fas fa-percentage"></i> Total ROI: <strong>Rp 750.000</strong></p>
+                </div>
+                <button class="btn-buy" onclick="showBuyConfirmation(500000, 15, 50000, 'Paket Platinum')">
+                    <i class="fas fa-shopping-cart"></i> Beli Sekarang
+                </button>
+            </div>
+        </div>
+        
+        <!-- Paket Spesial -->
+        <div id="discount" class="invest-packages">
+            <!-- Paket Basic Spesial -->
+            <div class="package-card">
+                <div class="discount-badge">SPESIAL #1</div>
+                <div class="package-header">
+                    <div class="package-title">
+                        <h3>Paket Basic Spesial</h3>
+                        <p>Investasi Pemula - Promo</p>
+                    </div>
+                </div>
+                <div class="package-details">
+                    <p><i class="fas fa-money-bill-wave"></i> Harga: <span class="original-price">Rp 1.000.000</span> <strong>Rp 750.000</strong></p>
+                    <p><i class="fas fa-calendar-day"></i> Durasi: <strong>7 Hari</strong></p>
+                    <p><i class="fas fa-coins"></i> Pendapatan Harian: <strong>Rp 175.000</strong></p>
+                    <p><i class="fas fa-percentage"></i> Total ROI: <strong>Rp 1.225.000</strong></p>
+                </div>
+                <button class="btn-buy" onclick="showBuyConfirmation(750000, 7, 175000, 'Paket Basic Spesial')">
+                    <i class="fas fa-shopping-cart"></i> Beli Sekarang
+                </button>
+            </div>
+            
+            <!-- Paket Silver Spesial -->
+            <div class="package-card">
+                <div class="discount-badge">SPESIAL #2</div>
+                <div class="package-header">
+                    <div class="package-title">
+                        <h3>Paket Silver Spesial</h3>
+                        <p>Investasi Menengah - Promo</p>
+                    </div>
+                </div>
+                <div class="package-details">
+                    <p><i class="fas fa-money-bill-wave"></i> Harga: <span class="original-price">Rp 1.450.000</span> <strong>Rp 1.100.000</strong></p>
+                    <p><i class="fas fa-calendar-day"></i> Durasi: <strong>7 Hari</strong></p>
+                    <p><i class="fas fa-coins"></i> Pendapatan Harian: <strong>Rp 265.000</strong></p>
+                    <p><i class="fas fa-percentage"></i> Total ROI: <strong>Rp 1.855.000</strong></p>
+                </div>
+                <button class="btn-buy" onclick="showBuyConfirmation(1100000, 7, 265000, 'Paket Silver Spesial')">
+                    <i class="fas fa-shopping-cart"></i> Beli Sekarang
+                </button>
+            </div>
+            
+            <!-- Paket Gold Spesial -->
+            <div class="package-card">
+                <div class="discount-badge">SPESIAL #3</div>
+                <div class="package-header">
+                    <div class="package-title">
+                        <h3>Paket Gold Spesial</h3>
+                        <p>Investasi Profesional - Promo</p>
+                    </div>
+                </div>
+                <div class="package-details">
+                    <p><i class="fas fa-money-bill-wave"></i> Harga: <span class="original-price">Rp 2.150.000</span> <strong>Rp 1.750.000</strong></p>
+                    <p><i class="fas fa-calendar-day"></i> Durasi: <strong>7 Hari</strong></p>
+                    <p><i class="fas fa-coins"></i> Pendapatan Harian: <strong>Rp 375.000</strong></p>
+                    <p><i class="fas fa-percentage"></i> Total ROI: <strong>Rp 2.625.000</strong></p>
+                </div>
+                <button class="btn-buy" onclick="showBuyConfirmation(1750000, 7, 375000, 'Paket Gold Spesial')">
+                    <i class="fas fa-shopping-cart"></i> Beli Sekarang
+                </button>
+            </div>
+        </div>
+        
+        <!-- Informasi Penting -->
+        <div class="invest-info">
+            <h3><i class="fas fa-info-circle"></i> Informasi Penting</h3>
+            <ul>
+                <li>Pendapatan harian akan dikreditkan setiap hari saat pukul 00:00 tidak menunggu saat waktu pembelian</li>
+                <li>Investasi akan berjalan otomatis sesuai produk pembelian yang dipilih</li>
+                <li>Fee untuk penarikan sebesar 5%</li>
+                <li>Saldo pendapatan bisa ditarik kapan saja (minimal penarikan Rp 50.000)</li>
+                <li>Pastikan saldo mencukupi sebelum membeli paket investasi</li>
+            </ul>
+        </div>
+    </main>
+    
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="confirmation-modal">
+        <div class="confirmation-box">
+            <div class="confirmation-icon">
+                <i class="fas fa-question-circle"></i>
+            </div>
+            <div class="confirmation-title">Konfirmasi Pembelian</div>
+            <div class="confirmation-message" id="confirmation-message">
+                Apakah Anda yakin ingin membeli paket ini?
+            </div>
+            <div class="confirmation-buttons">
+                <button class="confirmation-btn btn-cancel" onclick="cancelPurchase()">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <button class="confirmation-btn btn-confirm" onclick="confirmPurchase()">
+                    <i class="fas fa-check"></i> Ya, Beli
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floating CS Button -->
+    <div class="cs-float-button" id="csFloatButton">
+        <i class="fas fa-headset"></i>
+    </div>
+    
+    <!-- CS Modal -->
+    <div class="cs-modal" id="csModal">
+        <div class="cs-modal-content">
+            <span class="cs-close-btn" onclick="closeCsModal()">&times;</span>
+            <div class="cs-modal-title">Hubungi Customer Service</div>
+            
+            <div class="cs-contact-item" onclick="contactAdmin()">
+                <i class="fab fa-telegram"></i>
+                <span>Admin Telegram</span>
+            </div>
+            
+            <div class="cs-contact-item" onclick="contactGroup()">
+                <i class="fab fa-telegram"></i>
+                <span>Group Telegram</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="menu.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Beranda</span>
+        </a>
+        <a href="invest.html" class="nav-item active">
+            <i class="fas fa-chart-line"></i>
+            <span>Investasi</span>
+        </a>
+        <a href="task.html" class="nav-item">
+            <i class="fas fa-tasks"></i>
+            <span>Misi</span>
+        </a>
+        <a href="team.html" class="nav-item">
+            <i class="fas fa-users"></i>
+            <span>Tim</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <i class="fas fa-user"></i>
+            <span>Profil</span>
+        </a>
+    </nav>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3h3v_Uv6tp6aG7AG7NrLR-fK9DUb0gPY",
+            authDomain: "investasiku-440d8.firebaseapp.com",
+            databaseURL: "https://investasiku-440d8-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "investasiku-440d8",
+            storageBucket: "investasiku-440d8.firebasestorage.app",
+            messagingSenderId: "683620679005",
+            appId: "1:683620679005:web:6d76323079f3f84f37fcb4"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // Variables to store package data for confirmation
+        let currentPackage = {
+            amount: 0,
+            duration: 0,
+            dailyEarning: 0,
+            name: ''
+        };
+
+        // Initialize background animations
+        function initBackground() {
+            const stars = document.getElementById('stars');
+            const bubbles = document.getElementById('bubbles');
+            
+            // Create stars
+            for (let i = 0; i < 150; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = star.style.height = Math.random() * 3 + 1 + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 5 + 's';
+                star.style.opacity = Math.random() * 0.5 + 0.2;
+                stars.appendChild(star);
+            }
+            
+            // Create bubbles
+            for (let i = 0; i < 30; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                const size = Math.random() * 80 + 20;
+                bubble.style.width = bubble.style.height = size + 'px';
+                bubble.style.left = Math.random() * 100 + '%';
+                bubble.style.top = Math.random() * 100 + '%';
+                bubble.style.animationDelay = Math.random() * 10 + 's';
+                bubble.style.animationDuration = (Math.random() * 20 + 10) + 's';
+                bubbles.appendChild(bubble);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Initialize background animations
+            initBackground();
+            
+            // Load user data
+            database.ref(`users/${userId}`).once('value')
+                .then(snapshot => {
+                    const currentUser = snapshot.val();
+                    if (!currentUser) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                    
+                    // Update UI
+                    document.getElementById('username-display').textContent = currentUser.username;
+                    document.getElementById('invest-balance').textContent = formatCurrency(currentUser.balance || 0);
+                    
+                    // Disable buy buttons if balance is 0
+                    if ((currentUser.balance || 0) === 0) {
+                        document.querySelectorAll('.btn-buy').forEach(btn => {
+                            btn.disabled = true;
+                            btn.innerHTML = '<i class="fas fa-wallet"></i> Saldo Tidak Cukup';
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error("Error loading user data:", error);
+                    window.location.href = 'index.html';
+                });
+            
+            // Initialize CS button functionality
+            initCsButton();
+        });
+        
+        function buyPackage(amount, duration, dailyEarning, name) {
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Calculate end date
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setDate(startDate.getDate() + duration);
+            
+            // Create new investment
+            const newInvestment = {
+                id: 'INV' + Math.floor(Math.random() * 10000),
+                name: name,
+                amount: amount,
+                duration: duration,
+                dailyEarning: dailyEarning,
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
+                status: 'active',
+                lastEarningDate: startDate.toISOString()
+            };
+            
+            // Update user data
+            database.ref(`users/${userId}`).once('value')
+                .then(snapshot => {
+                    const user = snapshot.val();
+                    if (!user) {
+                        window.location.href = 'index.html';
+                        return Promise.reject('User not found');
+                    }
+                    
+                    if (user.balance < amount) {
+                        showToast('Saldo Anda tidak cukup untuk membeli paket ini. Silahkan deposit terlebih dahulu.', 'error');
+                        return Promise.reject('Insufficient balance');
+                    }
+                    
+                    // Prepare updates
+                    const updates = {};
+                    updates[`users/${userId}/balance`] = (user.balance || 0) - amount;
+                    updates[`users/${userId}/totalInvest`] = (user.totalInvest || 0) + amount;
+                    
+                    // Add to investments
+                    const investments = user.investments || [];
+                    updates[`users/${userId}/investments`] = [...investments, newInvestment];
+                    
+                    // Add transaction
+                    const newTransaction = {
+                        id: 'TXN' + Math.floor(Math.random() * 10000),
+                        type: 'investment',
+                        amount: amount,
+                        date: new Date().toISOString(),
+                        status: 'completed',
+                        packageName: name
+                    };
+                    
+                    const transactions = user.transactions || [];
+                    updates[`users/${userId}/transactions`] = [...transactions, newTransaction];
+                    
+                    // Update task progress if applicable
+                    if (user.tasks) {
+                        const taskIndex = user.tasks.findIndex(t => t.id === 'TASK003');
+                        if (taskIndex !== -1 && !user.tasks[taskIndex].completed) {
+                            const newProgress = (user.tasks[taskIndex].progress || 0) + amount;
+                            updates[`users/${userId}/tasks/${taskIndex}/progress`] = newProgress;
+                            
+                            if (newProgress >= user.tasks[taskIndex].target) {
+                                updates[`users/${userId}/tasks/${taskIndex}/progress`] = user.tasks[taskIndex].target;
+                            }
+                        }
+                    }
+                    
+                    return database.ref().update(updates);
+                })
+                .then(() => {
+                    showToast(`Pembelian ${name} berhasil! Investasi akan mulai berjalan hari ini.`, 'success');
+                    
+                    // Redirect to menu page
+                    setTimeout(() => {
+                        window.location.href = 'menu.html';
+                    }, 1500);
+                })
+                .catch(error => {
+                    if (error !== 'Insufficient balance' && error !== 'User not found') {
+                        console.error("Error buying package:", error);
+                        showToast('Gagal membeli paket investasi', 'error');
+                    }
+                });
+        }
+
+        function openInvestTab(tabId) {
+            document.querySelectorAll('.invest-packages').forEach(pkg => {
+                pkg.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.invest-tabs .tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+        
+        function showBuyConfirmation(amount, duration, dailyEarning, name) {
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            database.ref(`users/${userId}/balance`).once('value')
+                .then(snapshot => {
+                    const balance = snapshot.val() || 0;
+                    if (balance < amount) {
+                        showToast('Saldo Anda tidak cukup untuk membeli paket ini. Silahkan deposit terlebih dahulu.', 'error');
+                        return;
+                    }
+                    
+                    // Store package data
+                    currentPackage = {
+                        amount: amount,
+                        duration: duration,
+                        dailyEarning: dailyEarning,
+                        name: name
+                    };
+                    
+                    // Update confirmation message
+                    document.getElementById('confirmation-message').innerHTML = `
+                        Apakah Anda yakin ingin membeli <strong>${name}</strong> seharga <strong>${formatCurrency(amount)}</strong>?
+                        <br><br>
+                        <small>Durasi: ${duration} Hari<br>
+                        Pendapatan Harian: ${formatCurrency(dailyEarning)}</small>
+                    `;
+                    
+                    // Show modal
+                    document.getElementById('confirmation-modal').style.display = 'flex';
+                })
+                .catch(error => {
+                    console.error("Error checking balance:", error);
+                    showToast('Gagal memeriksa saldo', 'error');
+                });
+        }
+        
+        function cancelPurchase() {
+            document.getElementById('confirmation-modal').style.display = 'none';
+        }
+        
+        function confirmPurchase() {
+            document.getElementById('confirmation-modal').style.display = 'none';
+            buyPackage(currentPackage.amount, currentPackage.duration, currentPackage.dailyEarning, currentPackage.name);
+        }
+        
+        function formatCurrency(amount) {
+            return 'Rp ' + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+        
+        // Floating CS Button Functionality
+        function initCsButton() {
+            const csButton = document.getElementById('csFloatButton');
+            const csModal = document.getElementById('csModal');
+            
+            // Make button draggable
+            let isDragging = false;
+            let offsetX, offsetY;
+            
+            csButton.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                offsetX = e.clientX - csButton.getBoundingClientRect().left;
+                offsetY = e.clientY - csButton.getBoundingClientRect().top;
+                csButton.style.cursor = 'grabbing';
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (isDragging) {
+                    csButton.style.left = (e.clientX - offsetX) + 'px';
+                    csButton.style.top = (e.clientY - offsetY) + 'px';
+                    csButton.style.right = 'unset';
+                    csButton.style.bottom = 'unset';
+                }
+            });
+            
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+                csButton.style.cursor = 'pointer';
+            });
+            
+            // Touch support for mobile
+            csButton.addEventListener('touchstart', function(e) {
+                isDragging = true;
+                const touch = e.touches[0];
+                offsetX = touch.clientX - csButton.getBoundingClientRect().left;
+                offsetY = touch.clientY - csButton.getBoundingClientRect().top;
+            });
+            
+            document.addEventListener('touchmove', function(e) {
+                if (isDragging) {
+                    const touch = e.touches[0];
+                    csButton.style.left = (touch.clientX - offsetX) + 'px';
+                    csButton.style.top = (touch.clientY - offsetY) + 'px';
+                    csButton.style.right = 'unset';
+                    csButton.style.bottom = 'unset';
+                    e.preventDefault(); // Prevent scrolling
+                }
+            });
+            
+            document.addEventListener('touchend', function() {
+                isDragging = false;
+            });
+            
+            // Click to open modal
+            csButton.addEventListener('click', function(e) {
+                if (!isDragging) {
+                    openCsModal();
+                }
+            });
+        }
+
+        function openCsModal() {
+            document.getElementById('csModal').style.display = 'flex';
+        }
+
+        function closeCsModal() {
+            document.getElementById('csModal').style.display = 'none';
+        }
+
+        function contactAdmin() {
+            window.open('https://t.me/InvestasiPintarCs', '_blank');
+            closeCsModal();
+        }
+
+        function contactGroup() {
+            window.open('https://t.me/+M4QWoGScLPw2ZjJl', '_blank');
+            closeCsModal();
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('csModal');
+            if (e.target === modal) {
+                closeCsModal();
+            }
+            
+            const confirmModal = document.getElementById('confirmation-modal');
+            if (e.target === confirmModal) {
+                cancelPurchase();
+            }
+        });
+
+        function showToast(message, type = "info", duration = 3000) {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, duration);
+        }
+    </script>
+</body>
+</html>

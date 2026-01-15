@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Utama - Investasi Pintar</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="maintenance-config.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --dark: #212529;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --gray-dark: #343a40;
+            --blue-gradient: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --green-gradient: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animasi bintang & gelembung */
+        #stars, #bubbles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: twinkle 3s infinite ease-in-out;
+        }
+
+        .bubble {
+            position: absolute;
+            background: radial-gradient(circle at 30% 30%, rgba(52, 152, 219, 0.2), rgba(41, 128, 185, 0.1));
+            border-radius: 50%;
+            animation: float 15s infinite ease-in-out;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(5deg); }
+            50% { transform: translateY(-40px) rotate(0deg); }
+            75% { transform: translateY(-20px) rotate(-5deg); }
+        }
+
+        /* Header */
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .logo-icon img {
+            width: 28px;
+            height: auto;
+            filter: brightness(0) invert(1);
+        }
+
+        .app-name h1 {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .app-name p {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-info span {
+            margin-right: 15px;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(52, 152, 219, 0.5);
+        }
+
+        /* Promo Slider */
+        .promo-slider {
+            margin: 15px;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider-container {
+            position: relative;
+            height: 180px;
+        }
+
+        .slider-track {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            height: 100%;
+        }
+
+        .slide {
+            min-width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .slide-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            color: white;
+        }
+
+        .slide-overlay h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .slide-overlay p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .slider-nav {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+        }
+
+        .slider-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .slider-dot.active {
+            background: #3498db;
+            transform: scale(1.2);
+        }
+
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .slider-btn:hover {
+            background: rgba(52, 152, 219, 0.8);
+        }
+
+        .slider-btn.prev {
+            left: 10px;
+        }
+
+        .slider-btn.next {
+            right: 10px;
+        }
+
+        /* Main Content */
+        .dashboard-main {
+            padding: 20px 15px;
+            padding-bottom: 100px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .balance-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .balance-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .balance-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            border-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .balance-card h3 {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+
+        .balance-card h3 i {
+            margin-right: 10px;
+            color: #3498db;
+        }
+
+        .amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-deposit {
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            color: #fff;
+        }
+
+        .btn-withdraw {
+            background: linear-gradient(to right, #e74c3c, #f39c12);
+            color: #fff;
+        }
+
+        .btn-invest {
+            background: linear-gradient(to right, #9b59b6, #3498db);
+            color: #fff;
+        }
+
+        .stats-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            border-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item h4 {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .stat-item .amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title i {
+            margin-right: 10px;
+            color: #3498db;
+        }
+
+        .investment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .investment-item {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .investment-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .investment-info h3 {
+            font-size: 16px;
+            color: #fff;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .investment-info p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 12px;
+        }
+
+        .progress-container {
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .investment-earnings {
+            text-align: right;
+            min-width: 120px;
+        }
+
+        .investment-earnings p:first-child {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 5px;
+        }
+
+        .investment-earnings .amount {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2ecc71;
+            margin-bottom: 0;
+            text-shadow: 0 2px 10px rgba(46, 204, 113, 0.3);
+        }
+
+        .no-investment {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .no-investment i {
+            font-size: 50px;
+            color: #3498db;
+            opacity: 0.5;
+            margin-bottom: 15px;
+        }
+
+        .no-investment p {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+            font-size: 15px;
+        }
+
+        .no-investment .btn-invest {
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        /* Floating CS Button */
+        .cs-float-button {
+            position: fixed;
+            right: 20px;
+            bottom: 80px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 5px 20px rgba(52, 152, 219, 0.5);
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.3s ease;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .cs-float-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.7);
+        }
+
+        .cs-float-button i {
+            pointer-events: none;
+        }
+
+        /* CS Modal */
+        .cs-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cs-modal-content {
+            background: rgba(30, 30, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px;
+            width: 90%;
+            max-width: 350px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            animation: slideUp 0.3s ease;
+        }
+
+        .cs-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .cs-contact-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cs-contact-item:hover {
+            background: rgba(52, 152, 219, 0.2);
+            transform: translateY(-2px);
+            border-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .cs-contact-item i {
+            font-size: 20px;
+            margin-right: 15px;
+            color: #3498db;
+        }
+
+        .cs-contact-item span {
+            font-size: 15px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .cs-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cs-close-btn:hover {
+            color: #e74c3c;
+            transform: rotate(90deg);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            padding: 5px 10px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .nav-item i {
+            font-size: 22px;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .nav-item.active i {
+            transform: translateY(-5px);
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-content {
+            background: rgba(30, 30, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 450px;
+            padding: 25px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slideUp 0.3s ease;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: #e74c3c;
+            transform: rotate(90deg);
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #fff;
+            font-weight: 600;
+            text-align: center;
+            font-size: 20px;
+        }
+
+        .payment-methods {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .method {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 100px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .method:hover {
+            border-color: #3498db;
+            transform: translateY(-3px);
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .method.selected {
+            border-color: #3498db;
+            background: rgba(52, 152, 219, 0.2);
+        }
+
+        .method img {
+            width: 40px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        .method span {
+            font-size: 12px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .qris-container {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .qris-container img {
+            width: 200px;
+            height: auto;
+            margin-bottom: 15px;
+            border-radius: 10px;
+        }
+
+        .qris-container p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .bank-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .bank-info p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 8px;
+        }
+
+        .bank-info p:last-child {
+            margin-bottom: 0;
+        }
+
+        .small {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 15px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-confirm {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            color: white;
+            border-radius: 12px;
+            font-weight: 500;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-confirm:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(52, 152, 219, 0.4);
+            opacity: 0.9;
+        }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(30, 30, 46, 0.95);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 18px 25px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            font-size: 15px;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            max-width: 80%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateY(10px);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid #2ecc71;
+        }
+
+        .toast.error {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .toast.info {
+            border-left: 4px solid #3498db;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 15px;
+            }
+            
+            .dashboard-main {
+                padding: 15px;
+                padding-bottom: 80px;
+            }
+            
+            .balance-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .slider-container {
+                height: 150px;
+            }
+            
+            .investment-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .investment-earnings {
+                text-align: left;
+                margin-top: 15px;
+                width: 100%;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app-name h1 {
+                font-size: 16px;
+            }
+            
+            .app-name p {
+                font-size: 10px;
+            }
+            
+            .user-info span {
+                display: none;
+            }
+            
+            .payment-methods {
+                flex-direction: column;
+            }
+            
+            .method {
+                width: 100%;
+            }
+            
+            .slider-container {
+                height: 130px;
+            }
+            
+            .slide-overlay h3 {
+                font-size: 16px;
+            }
+            
+            .slide-overlay p {
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background elements -->
+    <div id="stars"></div>
+    <div id="bubbles"></div>
+
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <div class="logo-icon">
+                <img src="images/logo-white.png" alt="Investasi Pintar">
+            </div>
+            <div class="app-name">
+                <h1>Investasi Pintar</h1>
+                <p>Platform investasi masa depan</p>
+            </div>
+        </div>
+        <div class="user-info">
+            <span id="username-display">Loading...</span>
+            <img src="images/user-avatar.png" alt="User Avatar" class="avatar">
+        </div>
+    </header>
+    
+    <!-- Promo Slider -->
+    <div class="promo-slider">
+        <div class="slider-container">
+            <button class="slider-btn prev"><i class="fas fa-chevron-left"></i></button>
+            <button class="slider-btn next"><i class="fas fa-chevron-right"></i></button>
+            
+            <div class="slider-track">
+                <!-- Slide 1 -->
+                <div class="slide" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('images/promo1.png');">
+                    <div class="slide-overlay">
+                        <h3>Investasi 10% Profit Harian</h3>
+                        <p>Mulai dengan Rp 50.000 saja</p>
+                    </div>
+                </div>
+                
+                <!-- Slide 2 -->
+                <div class="slide" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('images/promo2.png');">
+                    <div class="slide-overlay">
+                        <h3>Bonus Referral 20%</h3>
+                        <p>Undang teman dan dapatkan komisi</p>
+                    </div>
+                </div>
+                
+                <!-- Slide 3 -->
+                <div class="slide" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('images/promo3.png');">
+                    <div class="slide-overlay">
+                        <h3>Cashback Deposit 5%</h3>
+                        <p>Khusus member baru</p>
+                    </div>
+                </div>
+                
+                <!-- Slide 4 -->
+                <div class="slide" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('images/promo4.png');">
+                    <div class="slide-overlay">
+                        <h3>Withdraw Instan 24/7</h3>
+                        <p>Penarikan kapan saja tanpa batas</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slider-nav">
+                <div class="slider-dot active" data-slide="0"></div>
+                <div class="slider-dot" data-slide="1"></div>
+                <div class="slider-dot" data-slide="2"></div>
+                <div class="slider-dot" data-slide="3"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <div class="balance-cards">
+            <div class="balance-card">
+                <h3><i class="fas fa-wallet"></i> Saldo Tersedia</h3>
+                <p class="amount" id="available-balance">Rp 0</p>
+                <div class="action-buttons">
+                    <button class="btn btn-deposit" id="deposit-btn">
+                        <i class="fas fa-plus-circle"></i> Deposit
+                    </button>
+                    <button class="btn btn-withdraw" id="withdraw-btn">
+                        <i class="fas fa-minus-circle"></i> Tarik Dana
+                    </button>
+                </div>
+            </div>
+            
+            <div class="balance-card stats-card">
+                <h3><i class="fas fa-chart-line"></i> Statistik</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <h4>Total Investasi</h4>
+                        <p class="amount" id="total-invest">Rp 0</p>
+                    </div>
+                    <div class="stat-item">
+                        <h4>Total Pendapatan</h4>
+                        <p class="amount" id="total-earnings">Rp 0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section-title">
+            <i class="fas fa-chart-line"></i> Investasi Aktif
+        </div>
+        
+        <div class="investment-list" id="investment-list">
+            <div class="no-investment">
+                <i class="fas fa-chart-line"></i>
+                <p>Anda belum memiliki investasi aktif</p>
+                <a href="invest.html" class="btn btn-invest">
+                    <i class="fas fa-plus"></i> Mulai Investasi
+                </a>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Modal Deposit -->
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('deposit-modal')">&times;</span>
+            <h2>Deposit Saldo</h2>
+            <div class="payment-methods">
+                <div class="method selected" data-method="qris">
+                    <img src="images/qris.png" alt="QRIS">
+                    <span>QRIS</span>
+                </div>
+                <div class="method" data-method="bank">
+                    <img src="images/bank.png" alt="Transfer Bank">
+                    <span>Transfer Bank</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="deposit-amount">Jumlah Deposit (Min. Rp 50.000)</label>
+                <input type="number" id="deposit-amount" placeholder="Masukkan jumlah deposit">
+            </div>
+            
+            <div class="qris-container" id="qris-container">
+                <img src="images/qris-code.png" alt="QR Code Deposit">
+                <p>Scan QR Code di atas untuk melakukan pembayaran</p>
+                <p class="small">Saldo akan masuk setelah admin konfirmasi</p>
+            </div>
+            
+            <div class="bank-container" id="bank-container" style="display: none;">
+                <div class="bank-info">
+                    <p><strong>Bank: Maintenance</strong></p>
+                    <p>Nomor Rekening: -</p>
+                    <p>Atas Nama: -</p>
+                    <p class="small">Untuk Deposit Melalui Bank Saat Ini Sedang Dalam Perbaikan Untuk Sementara Waktu Gunakan QRIS Terimakasih.</p>
+                </div>
+            </div>
+            
+            <button class="btn-confirm" id="confirm-deposit">
+                <i class="fas fa-check-circle"></i> Konfirmasi
+            </button>
+        </div>
+    </div>
+    
+    <!-- Modal Withdraw -->
+    <div id="withdraw-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('withdraw-modal')">&times;</span>
+            <h2>Tarik Saldo</h2>
+            
+            <div class="payment-methods">
+                <div class="method selected" data-method="dana">
+                    <img src="images/dana.png" alt="DANA">
+                    <span>DANA</span>
+                </div>
+                <div class="method" data-method="ovo">
+                    <img src="images/ovo.png" alt="OVO">
+                    <span>OVO</span>
+                </div>
+                <div class="method" data-method="bca">
+                    <img src="images/bank.png" alt="BCA">
+                    <span>BANK</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="withdraw-amount">Jumlah Penarikan (Min. Rp 50.000)</label>
+                <input type="number" id="withdraw-amount" placeholder="Masukkan jumlah penarikan">
+            </div>
+            
+            <div class="form-group">
+                <label for="withdraw-account">Nomor E-Wallet/Rekening</label>
+                <input type="text" id="withdraw-account" placeholder="Masukkan nomor tujuan">
+            </div>
+            
+            <div class="form-group">
+                <label for="withdraw-name">Nama Pemilik</label>
+                <input type="text" id="withdraw-name" placeholder="DANA/OVO/BANK Nama Rekening">
+            </div>
+            
+            <button class="btn-confirm" id="confirm-withdraw">
+                <i class="fas fa-paper-plane"></i> Ajukan Penarikan
+            </button>
+            <p class="small">Penarikan akan diproses dalam 1x24 jam pada hari kerja</p>
+        </div>
+    </div>
+    
+    <!-- Floating CS Button -->
+    <div class="cs-float-button" id="csFloatButton">
+        <i class="fas fa-headset"></i>
+    </div>
+    
+    <!-- CS Modal -->
+    <div class="cs-modal" id="csModal">
+        <div class="cs-modal-content">
+            <span class="cs-close-btn" onclick="closeCsModal()">&times;</span>
+            <div class="cs-modal-title">Hubungi Customer Service</div>
+            
+            <div class="cs-contact-item" onclick="contactAdmin()">
+                <i class="fab fa-telegram"></i>
+                <span>Admin Telegram</span>
+            </div>
+            
+            <div class="cs-contact-item" onclick="contactGroup()">
+                <i class="fab fa-telegram"></i>
+                <span>Group Telegram</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="menu.html" class="nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Beranda</span>
+        </a>
+        <a href="invest.html" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Investasi</span>
+        </a>
+        <a href="task.html" class="nav-item">
+            <i class="fas fa-tasks"></i>
+            <span>Misi</span>
+        </a>
+        <a href="team.html" class="nav-item">
+            <i class="fas fa-users"></i>
+            <span>Tim</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <i class="fas fa-user"></i>
+            <span>Profil</span>
+        </a>
+    </nav>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3h3v_Uv6tp6aG7AG7NrLR-fK9DUb0gPY",
+            authDomain: "investasiku-440d8.firebaseapp.com",
+            databaseURL: "https://investasiku-440d8-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "investasiku-440d8",
+            storageBucket: "investasiku-440d8.firebasestorage.app",
+            messagingSenderId: "683620679005",
+            appId: "1:683620679005:web:6d76323079f3f84f37fcb4"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // Promo Slider
+        class PromoSlider {
+            constructor() {
+                this.sliderTrack = document.querySelector('.slider-track');
+                this.sliderDots = document.querySelectorAll('.slider-dot');
+                this.prevBtn = document.querySelector('.slider-btn.prev');
+                this.nextBtn = document.querySelector('.slider-btn.next');
+                this.currentSlide = 0;
+                this.slideCount = 4;
+                this.autoSlideInterval = null;
+                
+                this.init();
+            }
+            
+            init() {
+                this.prevBtn.addEventListener('click', () => this.prevSlide());
+                this.nextBtn.addEventListener('click', () => this.nextSlide());
+                
+                this.sliderDots.forEach((dot, index) => {
+                    dot.addEventListener('click', () => this.goToSlide(index));
+                });
+                
+                this.startAutoSlide();
+                
+                // Pause auto slide on hover
+                document.querySelector('.slider-container').addEventListener('mouseenter', () => {
+                    this.stopAutoSlide();
+                });
+                
+                document.querySelector('.slider-container').addEventListener('mouseleave', () => {
+                    this.startAutoSlide();
+                });
+            }
+            
+            goToSlide(index) {
+                this.currentSlide = index;
+                this.updateSlider();
+            }
+            
+            prevSlide() {
+                this.currentSlide = (this.currentSlide - 1 + this.slideCount) % this.slideCount;
+                this.updateSlider();
+            }
+            
+            nextSlide() {
+                this.currentSlide = (this.currentSlide + 1) % this.slideCount;
+                this.updateSlider();
+            }
+            
+            updateSlider() {
+                const translateX = -this.currentSlide * 100;
+                this.sliderTrack.style.transform = `translateX(${translateX}%)`;
+                
+                this.sliderDots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === this.currentSlide);
+                });
+            }
+            
+            startAutoSlide() {
+                this.stopAutoSlide();
+                this.autoSlideInterval = setInterval(() => {
+                    this.nextSlide();
+                }, 5000);
+            }
+            
+            stopAutoSlide() {
+                if (this.autoSlideInterval) {
+                    clearInterval(this.autoSlideInterval);
+                    this.autoSlideInterval = null;
+                }
+            }
+        }
+
+        // Initialize promo slider
+        let promoSlider;
+
+        // Initialize background animations
+        function initBackground() {
+            const stars = document.getElementById('stars');
+            const bubbles = document.getElementById('bubbles');
+            
+            // Create stars
+            for (let i = 0; i < 150; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = star.style.height = Math.random() * 3 + 1 + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 5 + 's';
+                star.style.opacity = Math.random() * 0.5 + 0.2;
+                stars.appendChild(star);
+            }
+            
+            // Create bubbles
+            for (let i = 0; i < 30; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                const size = Math.random() * 80 + 20;
+                bubble.style.width = bubble.style.height = size + 'px';
+                bubble.style.left = Math.random() * 100 + '%';
+                bubble.style.top = Math.random() * 100 + '%';
+                bubble.style.animationDelay = Math.random() * 10 + 's';
+                bubble.style.animationDuration = (Math.random() * 20 + 10) + 's';
+                bubbles.appendChild(bubble);
+            }
+        }
+
+        // Modified function to process daily earnings
+        function processDailyEarnings(userId) {
+            const today = new Date().toISOString().split('T')[0];
+            
+            database.ref(`users/${userId}`).once('value')
+                .then(snapshot => {
+                    const user = snapshot.val();
+                    if (!user || !user.investments) return;
+                    
+                    const updates = {};
+                    let earningsProcessed = false;
+                    let totalEarnings = 0;
+                    
+                    // Check each investment
+                    user.investments.forEach((investment, index) => {
+                        if (investment.status === 'active') {
+                            const startDate = new Date(investment.startDate);
+                            const endDate = new Date(investment.endDate);
+                            const now = new Date();
+                            
+                            // Calculate days passed since start
+                            const daysPassed = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+                            
+                            // Calculate expected earnings days
+                            const expectedEarningsDays = Math.min(daysPassed, investment.duration);
+                            
+                            // Calculate how many days we need to process
+                            const lastProcessedDays = investment.lastProcessedDays || 0;
+                            const daysToProcess = expectedEarningsDays - lastProcessedDays;
+                            
+                            if (daysToProcess > 0) {
+                                // Calculate total earnings for this period
+                                const periodEarnings = investment.dailyEarning * daysToProcess;
+                                totalEarnings += periodEarnings;
+                                
+                                // Update last processed days
+                                updates[`users/${userId}/investments/${index}/lastProcessedDays`] = expectedEarningsDays;
+                                
+                                earningsProcessed = true;
+                            }
+                        }
+                    });
+                    
+                    if (earningsProcessed && totalEarnings > 0) {
+                        // Update balance and total earnings
+                        const newBalance = (user.balance || 0) + totalEarnings;
+                        updates[`users/${userId}/balance`] = newBalance;
+                        
+                        const newTotalEarnings = (user.totalEarnings || 0) + totalEarnings;
+                        updates[`users/${userId}/totalEarnings`] = newTotalEarnings;
+                        
+                        // Create transaction record
+                        const newTransaction = {
+                            id: 'TXN' + Math.floor(Math.random() * 10000),
+                            type: 'earning',
+                            amount: totalEarnings,
+                            date: new Date().toISOString(),
+                            status: 'completed',
+                            description: 'Pendapatan harian investasi'
+                        };
+                        
+                        const newTransactions = [...(user.transactions || []), newTransaction];
+                        updates[`users/${userId}/transactions`] = newTransactions;
+                        
+                        return database.ref().update(updates)
+                            .then(() => {
+                                // Update UI if user is currently viewing the page
+                                if (document.getElementById('available-balance')) {
+                                    document.getElementById('available-balance').textContent = formatCurrency(newBalance);
+                                    document.getElementById('total-earnings').textContent = formatCurrency(newTotalEarnings);
+                                }
+                            });
+                    }
+                })
+                .catch(error => {
+                    console.error("Error processing daily earnings:", error);
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Initialize background animations
+            initBackground();
+            
+            // Initialize promo slider
+            promoSlider = new PromoSlider();
+            
+            // Process daily earnings immediately when page loads
+            processDailyEarnings(userId);
+            
+            // Set interval to check for earnings every hour (as backup)
+            setInterval(() => processDailyEarnings(userId), 60 * 60 * 1000);
+            
+            // Load user data
+            database.ref(`users/${userId}`).once('value')
+                .then(snapshot => {
+                    const currentUser = snapshot.val();
+                    if (!currentUser) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                    
+                    // Update UI
+                    document.getElementById('username-display').textContent = currentUser.username;
+                    document.getElementById('available-balance').textContent = formatCurrency(currentUser.balance || 0);
+                    document.getElementById('total-invest').textContent = formatCurrency(currentUser.totalInvest || 0);
+                    document.getElementById('total-earnings').textContent = formatCurrency(currentUser.totalEarnings || 0);
+                    
+                    // Load active investments
+                    loadInvestments(userId, currentUser);
+                    
+                    // Set up event listeners
+                    setupEventListeners(userId);
+                    
+                    // Initialize CS button functionality
+                    initCsButton();
+                })
+                .catch(error => {
+                    console.error("Error loading user data:", error);
+                    window.location.href = 'index.html';
+                });
+        });
+
+        function setupEventListeners(userId) {
+            // Deposit button
+            document.getElementById('deposit-btn').addEventListener('click', function() {
+                document.getElementById('deposit-modal').style.display = 'flex';
+            });
+            
+            // Withdraw button
+            document.getElementById('withdraw-btn').addEventListener('click', function() {
+                document.getElementById('withdraw-modal').style.display = 'flex';
+            });
+            
+            // Deposit method selection
+            document.querySelectorAll('#deposit-modal [data-method]').forEach(method => {
+                method.addEventListener('click', function() {
+                    this.parentElement.querySelectorAll('.method').forEach(m => {
+                        m.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    
+                    const methodType = this.getAttribute('data-method');
+                    if (methodType === 'qris') {
+                        document.getElementById('qris-container').style.display = 'block';
+                        document.getElementById('bank-container').style.display = 'none';
+                    } else if (methodType === 'bank') {
+                        document.getElementById('qris-container').style.display = 'none';
+                        document.getElementById('bank-container').style.display = 'block';
+                    }
+                });
+            });
+            
+            // Withdraw method selection
+            document.querySelectorAll('#withdraw-modal [data-method]').forEach(method => {
+                method.addEventListener('click', function() {
+                    this.parentElement.querySelectorAll('.method').forEach(m => {
+                        m.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                });
+            });
+            
+            // Confirm deposit
+            document.getElementById('confirm-deposit').addEventListener('click', function() {
+                const amount = parseInt(document.getElementById('deposit-amount').value);
+                const method = document.querySelector('#deposit-modal .method.selected').getAttribute('data-method');
+                
+                if (!amount || amount < 50000) {
+                    showToast('Minimal deposit adalah Rp 50.000', 'error');
+                    return;
+                }
+                
+                // Create new transaction
+                const newTransaction = {
+                    id: 'TXN' + Math.floor(Math.random() * 10000),
+                    type: 'deposit',
+                    amount: amount,
+                    method: method,
+                    date: new Date().toISOString(),
+                    status: 'pending'
+                };
+                
+                database.ref(`users/${userId}/transactions`).once('value')
+                    .then(snapshot => {
+                        const transactions = snapshot.val() || [];
+                        const updatedTransactions = [...transactions, newTransaction];
+                        
+                        return database.ref(`users/${userId}/transactions`).set(updatedTransactions);
+                    })
+                    .then(() => {
+                        closeModal('deposit-modal');
+                        document.getElementById('deposit-amount').value = '';
+                        showToast(`Deposit sebesar ${formatCurrency(amount)} berhasil diajukan! Menunggu konfirmasi admin.`, 'success');
+                    })
+                    .catch(error => {
+                        console.error("Error creating deposit:", error);
+                        showToast('Gagal mengajukan deposit', 'error');
+                    });
+            });
+            
+            // Confirm withdraw
+            document.getElementById('confirm-withdraw').addEventListener('click', function() {
+                const amount = parseInt(document.getElementById('withdraw-amount').value);
+                const account = document.getElementById('withdraw-account').value;
+                const name = document.getElementById('withdraw-name').value;
+                const method = document.querySelector('#withdraw-modal .method.selected').getAttribute('data-method');
+                
+                if (!amount || !account || !name) {
+                    showToast('Silahkan isi semua field', 'error');
+                    return;
+                }
+                
+                if (amount < 50000) {
+                    showToast('Minimal penarikan adalah Rp 50.000', 'error');
+                    return;
+                }
+                
+                // Check balance first
+                database.ref(`users/${userId}`).once('value')
+                    .then(snapshot => {
+                        const user = snapshot.val();
+                        if (amount > (user.balance || 0)) {
+                            showToast('Saldo Anda tidak cukup untuk penarikan ini', 'error');
+                            return Promise.reject('Insufficient balance');
+                        }
+                        
+                        // Create new transaction
+                        const newTransaction = {
+                            id: 'TXN' + Math.floor(Math.random() * 10000),
+                            type: 'withdrawal',
+                            amount: amount,
+                            method: method,
+                            date: new Date().toISOString(),
+                            status: 'pending',
+                            account: account,
+                            accountName: name
+                        };
+                        
+                        const transactions = user.transactions || [];
+                        const updatedTransactions = [...transactions, newTransaction];
+                        
+                        // Update balance and transactions
+                        const updates = {};
+                        updates[`users/${userId}/balance`] = (user.balance || 0) - amount;
+                        updates[`users/${userId}/transactions`] = updatedTransactions;
+                        
+                        return database.ref().update(updates);
+                    })
+                    .then(() => {
+                        closeModal('withdraw-modal');
+                        document.getElementById('withdraw-amount').value = '';
+                        document.getElementById('withdraw-account').value = '';
+                        document.getElementById('withdraw-name').value = '';
+                        
+                        // Update UI
+                        database.ref(`users/${userId}/balance`).once('value')
+                            .then(snapshot => {
+                                document.getElementById('available-balance').textContent = formatCurrency(snapshot.val() || 0);
+                            });
+                            
+                        showToast('Permintaan penarikan berhasil diajukan. Menunggu konfirmasi admin.', 'success');
+                    })
+                    .catch(error => {
+                        if (error !== 'Insufficient balance') {
+                            console.error("Error creating withdrawal:", error);
+                            showToast('Gagal mengajukan penarikan', 'error');
+                        }
+                    });
+            });
+            
+            // Close modals when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target.classList.contains('modal')) {
+                    e.target.style.display = 'none';
+                }
+            });
+        }
+
+        function loadInvestments(userId, user) {
+            const investmentList = document.getElementById('investment-list');
+            
+            if (!user.investments || user.investments.length === 0) {
+                investmentList.innerHTML = `
+                    <div class="no-investment">
+                        <i class="fas fa-chart-line"></i>
+                        <p>Anda belum memiliki investasi aktif</p>
+                        <a href="invest.html" class="btn btn-invest">
+                            <i class="fas fa-plus"></i> Mulai Investasi
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Filter active investments
+            const activeInvestments = user.investments.filter(inv => {
+                const endDate = new Date(inv.endDate);
+                return endDate > new Date() && inv.status === 'active';
+            });
+            
+            if (activeInvestments.length === 0) {
+                investmentList.innerHTML = `
+                    <div class="no-investment">
+                        <i class="fas fa-chart-line"></i>
+                        <p>Anda belum memiliki investasi aktif</p>
+                        <a href="invest.html" class="btn btn-invest">
+                            <i class="fas fa-plus"></i> Mulai Investasi
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            investmentList.innerHTML = '';
+            
+            activeInvestments.forEach(investment => {
+                const daysLeft = calculateDaysLeft(investment.endDate);
+                const progressPercent = calculateProgressPercent(investment.startDate, investment.endDate);
+                const daysPassed = investment.duration - daysLeft;
+                
+                const investmentItem = document.createElement('div');
+                investmentItem.className = 'investment-item';
+                investmentItem.innerHTML = `
+                    <div class="investment-info">
+                        <h3>${investment.name}</h3>
+                        <p>${formatCurrency(investment.amount)} - ${investment.duration} Hari</p>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progressPercent}%"></div>
+                            </div>
+                            <div class="progress-text">
+                                <span>${daysPassed} Hari berlalu</span>
+                                <span>-${daysLeft} Hari tersisa</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="investment-earnings">
+                        <p>Pendapatan Harian</p>
+                        <p class="amount">${formatCurrency(investment.dailyEarning)}</p>
+                    </div>
+                `;
+                
+                investmentList.appendChild(investmentItem);
+            });
+        }
+
+        function initCsButton() {
+            const csButton = document.getElementById('csFloatButton');
+            const csModal = document.getElementById('csModal');
+            
+            // Make button draggable
+            let isDragging = false;
+            let offsetX, offsetY;
+            
+            csButton.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                offsetX = e.clientX - csButton.getBoundingClientRect().left;
+                offsetY = e.clientY - csButton.getBoundingClientRect().top;
+                csButton.style.cursor = 'grabbing';
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (isDragging) {
+                    csButton.style.left = (e.clientX - offsetX) + 'px';
+                    csButton.style.top = (e.clientY - offsetY) + 'px';
+                    csButton.style.right = 'unset';
+                    csButton.style.bottom = 'unset';
+                }
+            });
+            
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+                csButton.style.cursor = 'pointer';
+            });
+            
+            // Touch support for mobile
+            csButton.addEventListener('touchstart', function(e) {
+                isDragging = true;
+                const touch = e.touches[0];
+                offsetX = touch.clientX - csButton.getBoundingClientRect().left;
+                offsetY = touch.clientY - csButton.getBoundingClientRect().top;
+            });
+            
+            document.addEventListener('touchmove', function(e) {
+                if (isDragging) {
+                    const touch = e.touches[0];
+                    csButton.style.left = (touch.clientX - offsetX) + 'px';
+                    csButton.style.top = (touch.clientY - offsetY) + 'px';
+                    csButton.style.right = 'unset';
+                    csButton.style.bottom = 'unset';
+                    e.preventDefault(); // Prevent scrolling
+                }
+            });
+            
+            document.addEventListener('touchend', function() {
+                isDragging = false;
+            });
+            
+            // Click to open modal
+            csButton.addEventListener('click', function(e) {
+                if (!isDragging) {
+                    openCsModal();
+                }
+            });
+        }
+
+        function openCsModal() {
+            document.getElementById('csModal').style.display = 'flex';
+        }
+
+        function closeCsModal() {
+            document.getElementById('csModal').style.display = 'none';
+        }
+
+        function contactAdmin() {
+            window.open('https://t.me/InvestasiPintarCs', '_blank');
+            closeCsModal();
+        }
+
+        function contactGroup() {
+            window.open('https://t.me/+M4QWoGScLPw2ZjJl', '_blank');
+            closeCsModal();
+        }
+
+        function formatCurrency(amount) {
+            return 'Rp ' + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+        
+        function calculateDaysLeft(endDate) {
+            const end = new Date(endDate);
+            const now = new Date();
+            const diff = end - now;
+            return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+        }
+        
+        function calculateProgressPercent(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const now = new Date();
+            
+            const total = end - start;
+            const passed = now - start;
+            
+            return Math.min(100, Math.max(0, (passed / total) * 100));
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function showToast(message, type = "info", duration = 4000) {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, duration);
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('csModal');
+            if (e.target === modal) {
+                closeCsModal();
+            }
+        });
+    </script>
+</body>
+</html>
